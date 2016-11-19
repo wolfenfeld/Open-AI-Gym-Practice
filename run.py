@@ -1,3 +1,1 @@
-import gym
-
 print 'hi'
