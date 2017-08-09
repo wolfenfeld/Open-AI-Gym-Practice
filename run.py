@@ -2,7 +2,10 @@ import gym
 import numpy as np
 
 
+
 def run_episode(env, parameters):
+
+    #Running an episode
 
     observation = env.reset()
     total_reward = 0
