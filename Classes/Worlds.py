@@ -4,10 +4,11 @@ import numpy as np
 
 class World(object):
 
-    def __init__(self, env_name='', **kwargs):
+    def __init__(self, env_name='', max_episode_steps=200, **kwargs):
 
         self._env_name = env_name
         self._env = gym.make(self.env_name)
+        self._env._max_episode_steps = max_episode_steps
         self._last_observation = None
         self._last_reward = None
         self._is_done = None
@@ -49,15 +50,19 @@ class World(object):
     def interact_with_world(self, action):
         self._last_observation, self._last_reward, self._is_done, self._last_info = self._env.step(action)
 
+    def render(self):
+        self._env.render()
+
 
 class QLearningDiscreteWorld(World):
 
     def __init__(self,
                  env_name,
+                 max_episode_steps=200,
                  state_space_bins_count=10,
                  **kwargs):
 
-        World.__init__(self, env_name=env_name, **kwargs)
+        World.__init__(self, env_name=env_name, max_episode_steps=max_episode_steps, **kwargs)
 
         self._state_space_bins_count = state_space_bins_count
 
@@ -70,9 +75,10 @@ class CartPoleWorld(QLearningDiscreteWorld):
 
     def __init__(self,
                  env_name='CartPole-v0',
+                 max_episode_steps=200,
                  **kwargs):
 
-        QLearningDiscreteWorld.__init__(self, env_name=env_name, **kwargs)
+        QLearningDiscreteWorld.__init__(self, env_name=env_name, max_episode_steps=max_episode_steps, **kwargs)
 
         self._number_of_actions = self._env.action_space.n
 
@@ -98,9 +104,8 @@ class CartPoleWorld(QLearningDiscreteWorld):
 
     def reset(self):
         self._last_observation = self._env.reset()
-        return self.get_digitized_state()
 
-    def get_digitized_state(self):
+    def get_digitized_state_of_last_observation(self):
 
         digitized_state = list()
 

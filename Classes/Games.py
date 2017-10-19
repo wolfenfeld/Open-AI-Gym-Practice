@@ -1,6 +1,8 @@
 from Worlds import CartPoleWorld
 from Agents import CartPoleAgent
 
+import pickle
+
 
 class Game(object):
     def __init__(self, agents, world, episodes, horizon=None):
@@ -28,7 +30,7 @@ class Game(object):
 
 class CartPoleGame(Game):
 
-    def __init__(self, world=CartPoleWorld(), episodes=1000, horizon=10000):
+    def __init__(self, world=CartPoleWorld(max_episode_steps=500), episodes=1000, horizon=500):
 
         Game.__init__(self,
                       agents=CartPoleAgent(world=world),
@@ -42,19 +44,22 @@ class CartPoleGame(Game):
 
     def run(self):
         rewards = list()
-        for episode in xrange(self.episodes):
+        for episode in range(self.episodes):
 
             total_reward = 0
 
-            state = self.world.reset()
+            self.world.reset()
 
-            action = self.agents.set_initial_state(state)
+            self.agents.set_initial_state(self.world.get_digitized_state_of_last_observation())
 
             for step in range(self.horizon - 1):
 
-                self.world.interact_with_world(action)
+                if episode == self.episodes - 2:
+                    self.world.render()
 
-                new_state = self.world.get_digitized_state()
+                self.world.interact_with_world(self.agents.last_action)
+
+                self.world.get_digitized_state_of_last_observation()
                 total_reward += self.world.last_reward
 
                 if self.world.is_done:
@@ -62,18 +67,25 @@ class CartPoleGame(Game):
                 else:
                     reward = self.world.last_reward
 
-                action = self.agents.act(new_state=new_state,
-                                         last_reward=reward)
+                self.agents.act(new_state=self.world.get_digitized_state_of_last_observation(),
+                                last_reward=reward)
+
                 if self.world.is_done:
+
                     rewards.append(total_reward)
-                    if total_reward > self.best_total_reward:
-                        self._best_total_reward = total_reward
+
+                    self._best_total_reward = max(total_reward, self.best_total_reward)
+
                     print 'Episode {0} is done.'.format(episode)
                     print 'Total Reward : {0}, Best reward : {1}'.format(total_reward, self.best_total_reward)
                     break
 
         print rewards
 
-if __name__ == "__main__":
+
+def run_cart_pole_game(save_data=False, data_file_path=''):
     game = CartPoleGame()
     game.run()
+
+    if save_data:
+        pickle.dump(game.agents.qtable, open(data_file_path, 'wb'))

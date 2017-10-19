@@ -25,22 +25,6 @@ class Agent(object):
     def update_current_state(self, new_state):
         self.current_state(new_state)
 
-    # @staticmethod
-    # def encode_state(state):
-    #     pass
-    #
-    # @staticmethod
-    # def decode_encoded_state(encoded_state):
-    #     pass
-    #
-    # @staticmethod
-    # def encode_action(action):
-    #     pass
-    #
-    # @staticmethod
-    # def decode_encoded_action(encoded_action):
-    #     pass
-
 
 class QLearner(Agent):
 
@@ -67,12 +51,12 @@ class QLearner(Agent):
         qtable = dict()
 
         iterable_argument = \
-            [range(self.world.state_space_bins_count+1) for _ in range(self.world.number_of_features)] + \
-            [range(self.world.number_of_actions)]
+            [range(self.world.state_space_bins_count + 1) for _ in range(self.world.number_of_features)]
 
         qtable_keys = list(itertools.product(*iterable_argument))
 
-        qtable_initial_values = np.random.uniform(low=-1, high=1, size=(len(qtable_keys))).tolist()
+        qtable_initial_values = np.random.uniform(low=-1, high=1, size=(len(qtable_keys),
+                                                                        self.world.number_of_actions))
 
         qtable.update(zip(qtable_keys, qtable_initial_values))
 
@@ -106,31 +90,12 @@ class QLearner(Agent):
         """
         self._current_state = state
 
-        self._last_action = self.get_best_action()
+        self._last_action = self.qtable[state].argsort()[-1]
 
-        return self._last_action
+    def q_value(self, reward, new_state, new_action):
 
-    def get_best_action(self):
-
-        best_action = 0
-        best_qvalue = -1
-
-        for action_number in range(self.world.number_of_actions):
-
-            state_action_pair = self.current_state + (action_number,)
-            if self.qtable[state_action_pair] > best_qvalue:
-                best_qvalue = self.qtable[state_action_pair]
-                best_action = action_number
-
-        return best_action
-
-    def q_value(self, reward, state, action):
-
-        current_state_action_pair = self.current_state + (self.last_action,)
-        new_state_action_pair = state + (action,)
-
-        return (1 - self.alpha) * self.qtable[current_state_action_pair] + self.alpha * (
-            reward + self.gamma * self.qtable[new_state_action_pair])
+        return (1 - self.alpha) * self.qtable[self.current_state][self.last_action] + self.alpha * (
+            reward + self.gamma * self.qtable[new_state][new_action])
 
     def act(self, new_state, last_reward):
         """
@@ -145,16 +110,14 @@ class QLearner(Agent):
         if choose_random_action:
             chosen_action = random.randint(0, self.world.number_of_actions - 1)
         else:
-            chosen_action = self.get_best_action()
+            chosen_action = self.qtable[new_state].argsort()[-1]
 
         self._random_action_rate *= self.random_action_decay_rate
 
-        state_action_pair = self.current_state+(self.last_action,)
-
-        self._qtable[state_action_pair] = self.q_value(
+        self._qtable[self.current_state][self.last_action] = self.q_value(
             reward=last_reward,
-            state=new_state,
-            action=chosen_action)
+            new_state=new_state,
+            new_action=chosen_action)
 
         self._last_action = chosen_action
         self._current_state = new_state
@@ -169,8 +132,8 @@ class CartPoleAgent(QLearner):
                  initial_action=None,
                  initial_state=None,
                  alpha=0.2,
-                 gamma=0.9,
-                 random_action_rate=0.7,
+                 gamma=1,
+                 random_action_rate=0.1,
                  random_action_decay_rate=0.99):
 
         QLearner.__init__(self,
@@ -182,10 +145,4 @@ class CartPoleAgent(QLearner):
                           random_action_rate=random_action_rate,
                           random_action_decay_rate=random_action_decay_rate)
 
-    # @staticmethod
-    # def encode_action(action):
-    #     return tuple(action)
-    #
-    # @staticmethod
-    # def encode_state(state):
-    #     return tuple(i for i in state)
+
