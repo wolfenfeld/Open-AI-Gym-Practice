@@ -13,6 +13,7 @@ class World(object):
         self._last_reward = None
         self._is_done = None
         self._last_info = None
+        self._number_of_actions = self.env.action_space
 
         for k, v in kwargs.iteritems():
             setattr(self, '_'+k, v)
@@ -40,6 +41,10 @@ class World(object):
     @property
     def last_info(self):
         return self._last_info
+
+    @property
+    def number_of_actions(self):
+        return self._number_of_actions
 
     def reset(self):
         return self._env.reset()
@@ -104,6 +109,10 @@ class CartPoleWorld(QLearningDiscreteWorld):
 
     def reset(self):
         self._last_observation = self._env.reset()
+
+    def get_last_state(self):
+
+        return self.last_observation
 
     def get_digitized_state_of_last_observation(self):
 
