@@ -1,83 +1,72 @@
-from Worlds import CartPoleWorld
-from Agents import CartPoleAgent, DQNAgent
+from Worlds import DiscreteCartPoleWorld, CartPoleWorld
+from Agents import QLearnerAgent, DQNAgent
 
 import pickle
 
 
 class Game(object):
     def __init__(self, agents, world, episodes, horizon=None):
-        self._agents = agents
-        self._world = world
-        self._horizon = horizon
-        self._episodes = episodes
-        self._best_total_reward = 0
+        self.agents = agents
+        self.world = world
+        self.horizon = horizon
+        self.episodes = episodes
+        self.best_total_reward = 0
 
-    @property
-    def agents(self):
-        return self._agents
+    def run(self):
+        rewards = list()
 
-    @property
-    def world(self):
-        return self._world
+        history = dict()
 
-    @property
-    def horizon(self):
-        return self._horizon
+        for episode in range(1, self.episodes + 1):
 
-    @property
-    def episodes(self):
-        return self._episodes
+            total_reward = 0
 
-    @property
-    def best_total_reward(self):
-        return self._best_total_reward
+            state = self.world.reset()
+
+            action = self.agents.sample_action(state)
+
+            for step in range(self.horizon - 1):
+
+                state, reward, done = self.world.interact_with_world(action)
+
+                action = self.agents.sample_action(state)
+
+                total_reward += reward
+
+                if done:
+                    reward = -400
+
+                self.agents.update_agent(state, action, reward, episode)
+
+                self.world.last_observation = state
+
+                if done:
+                    rewards.append(total_reward)
+
+                    self.best_total_reward = max(total_reward, self.best_total_reward)
+
+                    print('Episode {0} is done.'.format(episode))
+                    print('Total Reward : {0}, Best reward : {1}'.format(total_reward, self.best_total_reward))
+
+                    history[episode] = total_reward
+
+                    break
+
+        print('Rewards History for {0}'.format(self.world.env_name))
+        print(rewards)
+        score_interval = 50
+        print('Average reward of last {0} runs'.format(score_interval))
+        print(sum(rewards[-score_interval:]) / len(rewards[-score_interval:]))
+        return history
 
 
 class CartPoleGame(Game):
 
-    def __init__(self, world=CartPoleWorld(max_episode_steps=200), episodes=1000, horizon=200):
+    def __init__(self, world=DiscreteCartPoleWorld(max_episode_steps=200), episodes=200, horizon=200):
 
         Game.__init__(self,
-                      agents=CartPoleAgent(world=world),
+                      agents=QLearnerAgent(world=world),
                       world=world, episodes=episodes, horizon=horizon)
-
-    def run(self):
-        rewards = list()
-        for episode in range(self.episodes):
-
-            total_reward = 0
-
-            self.world.reset()
-
-            for step in range(self.horizon - 1):
-
-                if episode == self.episodes - 2:
-                    self.world.render()
-
-                self.world.interact_with_world(self.agents.last_action)
-
-                total_reward += self.world.last_reward
-
-                if self.world.is_done:
-                    reward = -200
-                else:
-                    reward = self.world.last_reward
-
-                self.agents.act(new_state=self.world.get_digitized_state_of_last_observation(),
-                                last_reward=reward)
-
-                if self.world.is_done:
-
-                    rewards.append(total_reward)
-
-                    self._best_total_reward = max(total_reward, self.best_total_reward)
-
-                    print 'Episode {0} is done.'.format(episode)
-                    print 'Total Reward : {0}, Best reward : {1}'.format(total_reward, self.best_total_reward)
-                    break
-
-        print rewards
-        print sum(rewards) / len(rewards)
 
 
 def run_cart_pole_game(save_data=False, data_file_path=''):
@@ -88,55 +77,16 @@ def run_cart_pole_game(save_data=False, data_file_path=''):
         pickle.dump(game.agents.qtable, open(data_file_path, 'wb'))
 
 
-class DQNCartPoleGame(Game):
+class DQNCartPoleGame(CartPoleGame):
 
-    def __init__(self, world=CartPoleWorld(max_episode_steps=200), episodes=1000, horizon=200):
+    def __init__(self, world=CartPoleWorld(max_episode_steps=200), episodes=500, horizon=200):
 
         Game.__init__(self,
                       agents=DQNAgent(world=world),
                       world=world, episodes=episodes, horizon=horizon)
 
-    def run(self):
-        rewards = list()
-
-        for episode in range(self.episodes):
-
-            total_reward = 0
-
-            self.world.reset()
-
-            self.agents.set_initial_state(self.world.get_last_state())
-
-            for step in range(self.horizon - 1):
-
-                if episode == self.episodes - 2:
-                    self.world.render()
-
-                self.world.interact_with_world(self.agents.last_action)
-
-                total_reward += self.world.last_reward
-
-                # if self.world.is_done:
-                #     reward = -200
-                # else:
-                reward = self.world.last_reward
-
-                self.agents.act(new_state=self.world.get_last_state(),
-                                last_reward=reward)
-
-                if self.world.is_done:
-
-                    rewards.append(total_reward)
-
-                    self._best_total_reward = max(total_reward, self.best_total_reward)
-
-                    print 'Episode {0} is done.'.format(episode)
-                    print 'Total Reward : {0}, Best reward : {1}'.format(total_reward, self.best_total_reward)
-                    break
-
-        print rewards
-
 
 def run_cart_pole_game_dqn():
     game = DQNCartPoleGame()
-    game.run()
+    history = game.run()
+    pickle.dump(history, open('history.pkl', 'wb'))
