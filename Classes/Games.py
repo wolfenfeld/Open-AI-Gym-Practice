@@ -5,68 +5,86 @@ import pickle
 
 
 class Game(object):
-    def __init__(self, agents, world, episodes, horizon=None):
+    """
+    Game - The object that defines the game.
+    """
+    def __init__(self, agents, world, episodes):
+        """
+        Initialization of the Game object
+        :param agents: the agents that play the game
+        :param world: the world where the game is played
+        :param episodes: the number of episodes that will be played in the game.
+        """
         self.agents = agents
         self.world = world
-        self.horizon = horizon
         self.episodes = episodes
+
+        # The best total reward over all the episodes.
         self.best_total_reward = 0
 
     def run(self):
-        rewards = list()
-
-        history = dict()
+        """
+        run function - Running a game
+        """
+        # The total rewards of each episode.
+        rewards = dict()
 
         for episode in range(1, self.episodes + 1):
 
+            # The total reward for the current episode.
             total_reward = 0
 
+            # The initial state
             state = self.world.reset()
 
+            # The initial action
             action = self.agents.sample_action(state)
 
-            for step in range(self.horizon - 1):
+            while True:
 
+                # Interacting with the world and acquiring the feedback:
+                # the new state, the reward and the done indicator.
                 state, reward, done = self.world.interact_with_world(action)
 
+                # Sampling the action from the agent.
                 action = self.agents.sample_action(state)
 
+                # Updating the total reward.
                 total_reward += reward
 
-                if done:
-                    reward = -400
+                # Updating the agent
+                self.agents.update_agent(state, action, reward, episode, done)
 
-                self.agents.update_agent(state, action, reward, episode)
-
+                # Updating the world object.
                 self.world.last_observation = state
 
+                # If the episode is done.
                 if done:
-                    rewards.append(total_reward)
 
+                    # Updating the reward dictionary.
+                    rewards[episode] = total_reward
+
+                    # Keeping best reward.
                     self.best_total_reward = max(total_reward, self.best_total_reward)
 
                     print('Episode {0} is done.'.format(episode))
                     print('Total Reward : {0}, Best reward : {1}'.format(total_reward, self.best_total_reward))
 
-                    history[episode] = total_reward
-
                     break
 
         print('Rewards History for {0}'.format(self.world.env_name))
-        print(rewards)
+        print(rewards.values())
         score_interval = 50
         print('Average reward of last {0} runs'.format(score_interval))
-        print(sum(rewards[-score_interval:]) / len(rewards[-score_interval:]))
-        return history
+        print(sum(rewards.values()[-score_interval:]) / len(rewards.values()[-score_interval:]))
+        return rewards
 
 
 class CartPoleGame(Game):
 
-    def __init__(self, world=DiscreteCartPoleWorld(max_episode_steps=200), episodes=200, horizon=200):
+    def __init__(self, world=DiscreteCartPoleWorld(max_episode_steps=200), episodes=200):
 
-        Game.__init__(self,
-                      agents=QLearnerAgent(world=world),
-                      world=world, episodes=episodes, horizon=horizon)
+        Game.__init__(self, agents=QLearnerAgent(world=world), world=world, episodes=episodes)
 
 
 def run_cart_pole_game(save_data=False, data_file_path=''):
@@ -79,14 +97,13 @@ def run_cart_pole_game(save_data=False, data_file_path=''):
 
 class DQNCartPoleGame(CartPoleGame):
 
-    def __init__(self, world=CartPoleWorld(max_episode_steps=200), episodes=500, horizon=200):
+    def __init__(self, world=CartPoleWorld(max_episode_steps=200), episodes=200):
 
-        Game.__init__(self,
-                      agents=DQNAgent(world=world),
-                      world=world, episodes=episodes, horizon=horizon)
+        Game.__init__(self, agents=DQNAgent(world=world), world=world, episodes=episodes)
 
 
 def run_cart_pole_game_dqn():
     game = DQNCartPoleGame()
     history = game.run()
+    print(len(history.keys()))
     pickle.dump(history, open('history.pkl', 'wb'))
