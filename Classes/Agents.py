@@ -51,7 +51,7 @@ class Agent(object):
         self.number_of_episodes_played = episode
 
         # Updating the decision module.
-        self.decision_module.update_module(state, action, reward, self.world.last_observation, self.last_action, done)
+        self.decision_module.update_module(self.world.last_observation, self.last_action, reward, state, action, done)
 
         # Updating the last action.
         self.last_action = action

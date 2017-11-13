@@ -97,7 +97,7 @@ class DiscreteCartPoleWorld(DiscreteWorld):
 
         # The features of the cart-pole world.
         self.features = ['cart_position', 'pole_angle', 'cart_velocity', 'angle_rate']
-        self.number_of_features = len(self.features)
+        self.number_of_features = self.env.observation_space.shape[0]
 
         # Indexing all the possible states of the world.
         self.cart_position_bins = np.linspace(start=-3, stop=3, num=self.number_of_discrete_values_per_feature)
@@ -162,7 +162,7 @@ class CartPoleWorld(World):
 
         # The features of this world.
         self.features = ['cart_position', 'pole_angle', 'cart_velocity', 'angle_rate']
-        self.number_of_features = len(self.features)
+        self.number_of_features = self.env.observation_space.shape[0]
 
     def reset(self):
         """
@@ -183,3 +183,47 @@ class CartPoleWorld(World):
         state, reward, done, _ = self.step(action)
 
         return state, reward, done
+
+
+class LunarLanderWorld(World):
+    """
+    A continues (not digitized) lunar-lander world.
+    """
+    def __init__(self,
+                 env_name='LunarLander-v2',
+                 max_episode_steps=1000,
+                 **kwargs):
+        """
+        Initializing the cart-pole world object
+        :param env_name: name of the environment.
+        :param max_episode_steps: maximum steps that can be taken during an episode in the game.
+        :param kwargs:  rest of the parameters/arguments.
+        """
+        World.__init__(self, env_name=env_name, max_episode_steps=max_episode_steps, **kwargs)
+
+        # Number of action that can be taken in a state.
+        self.number_of_actions = self.env.action_space.n
+
+        # The features of this world.
+        self.number_of_features = self.env.observation_space.shape[0]
+
+    def reset(self):
+        """
+        Resting the world.
+        :return: the initial state.
+        """
+        self.last_observation = self.env.reset()
+
+        return self.last_observation
+
+    def interact_with_world(self, action):
+        """
+        Playing the action on the world.
+        :param action: the taken action
+        :return: the feedback from the world.
+        """
+
+        state, reward, done, _ = self.step(action)
+
+        return state, reward, done
+

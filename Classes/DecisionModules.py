@@ -85,7 +85,7 @@ class QTableModule(DecisionModule):
 
         return q_table
 
-    def q_value(self, state, action, reward, previous_state, previous_action):
+    def q_value(self, previous_state, previous_action, reward, state, action):
         """
         Calculating the Q-value.
         :param state: the current state
@@ -99,7 +99,7 @@ class QTableModule(DecisionModule):
         return (1 - self.alpha) * self.q_table[previous_state][previous_action] + \
             self.alpha * (reward + self.gamma * self.q_table[state][action])
 
-    def update_module(self, state, action, reward, previous_state, previous_action, done):
+    def update_module(self, previous_state, previous_action, reward, state, action, done):
         """
         Updating the module.
         :param state: the current state
@@ -114,12 +114,8 @@ class QTableModule(DecisionModule):
             reward = -200
 
         # Updating the Q-table.
-        self.q_table[previous_state][previous_action] = self.q_value(
-            state=state,
-            action=action,
-            reward=reward,
-            previous_state=previous_state,
-            previous_action=previous_action)
+        self.q_table[previous_state][previous_action] = \
+            self.q_value(previous_state, previous_action, reward, state, action)
 
     def get_action(self, state):
         """
@@ -164,9 +160,10 @@ class DQNModule(DecisionModule):
         self.module.__init__()
 
         # The neural networks layers and activation function.
-        self.module.f1 = nn.Linear(number_of_features, 200)
+        self.module.f1 = nn.Linear(number_of_features, 40)
+        self.module.f2 = nn.Linear(40, 100)
+        self.module.f3 = nn.Linear(100, number_of_actions)
         self.module.relu = nn.ReLU()
-        self.module.f2 = nn.Linear(200, number_of_actions)
 
         # The metric used to optimize.
         self.module.mse = nn.MSELoss()
@@ -196,10 +193,12 @@ class DQNModule(DecisionModule):
         out = self.module.f1(state)
         out = self.module.relu(out)
         out = self.module.f2(out)
+        out = self.module.relu(out)
+        out = self.module.f3(out)
 
         return out
 
-    def compute(self, state, reward, previous_state, previous_action, done):
+    def compute(self, previous_state, previous_action, reward, state, done):
         """
         Updating the experience_replay memory and training the network.
         :param state: current state
@@ -235,32 +234,34 @@ class DQNModule(DecisionModule):
         done = [data[4] for data in minibatch]
 
         # Estimating the Q-values with the forward passing over network with the new state.
-        q_prime = self.forward(
-            Variable(torch.from_numpy(np.array(new_state)).float())).data.numpy()
+        q = self.forward(Variable(torch.from_numpy(np.array(new_state)).float())).data.numpy()
 
-        # Computing y_label with the rewards and q_prime.
-        y_label = []
+        # Computing y with the rewards and q.
+        y = list()
 
         for i in range(self.batch_size):
             if done[i]:
-                y_label.append(reward[i])
+                y.append(reward[i])
             else:
-                y_label.append(reward[i] + self.gamma * np.max(q_prime[i]))
+                y.append(reward[i] + self.gamma * np.max(q[i]))
 
-        # Computing y_out from the minibatch.
-        state_input = torch.from_numpy(np.array(state)).float()
-        action_input = torch.from_numpy(np.array(action))
-        out = self.forward(Variable(state_input))
-        y_out = out.gather(1, Variable(action_input.unsqueeze(1)))
+        # Converting y to a torch variable,
+        target = Variable(torch.from_numpy(np.array(y)).float())
+
+        # Computing the approximation of the target from the minibatch.
+        s = torch.from_numpy(np.array(state)).float()
+        a = torch.from_numpy(np.array(action))
+        approximation = self.forward(Variable(s)).gather(1, Variable(a.unsqueeze(1)))
 
         # Backward pass.
         self.optimizer.zero_grad()
-        # Defining the loss - MSE(y_out, y_label).
-        loss = self.module.mse(y_out, Variable(torch.from_numpy(np.array(y_label)).float()))
+
+        # Defining the loss - MSE(approximation, target).
+        loss = self.module.mse(approximation, target)
         loss.backward()
         self.optimizer.step()
 
-    def update_module(self, state, _, reward, previous_state, previous_action, done):
+    def update_module(self, previous_state, previous_action, reward, state, _, done):
         """
         Updating the module.
         :param state: the current state.
@@ -275,7 +276,7 @@ class DQNModule(DecisionModule):
             reward = -200
 
         # Update the network.
-        self.compute(state, reward, previous_state, previous_action, done)
+        self.compute(previous_state, previous_action, reward, state, done)
 
     def get_action(self, state):
         """

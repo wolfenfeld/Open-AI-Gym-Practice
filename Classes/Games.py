@@ -1,4 +1,4 @@
-from Worlds import DiscreteCartPoleWorld, CartPoleWorld
+from Worlds import DiscreteCartPoleWorld, CartPoleWorld, LunarLanderWorld
 from Agents import QLearnerAgent, DQNAgent
 
 import pickle
@@ -41,6 +41,8 @@ class Game(object):
             action = self.agents.sample_action(state)
 
             while True:
+                # if episode > self.episodes - 300:
+                self.world.render()
 
                 # Interacting with the world and acquiring the feedback:
                 # the new state, the reward and the done indicator.
@@ -82,7 +84,7 @@ class Game(object):
 
 class CartPoleGame(Game):
 
-    def __init__(self, world=DiscreteCartPoleWorld(max_episode_steps=200), episodes=200):
+    def __init__(self, world=DiscreteCartPoleWorld(max_episode_steps=400), episodes=600):
 
         Game.__init__(self, agents=QLearnerAgent(world=world), world=world, episodes=episodes)
 
@@ -97,7 +99,7 @@ def run_cart_pole_game(save_data=False, data_file_path=''):
 
 class DQNCartPoleGame(CartPoleGame):
 
-    def __init__(self, world=CartPoleWorld(max_episode_steps=200), episodes=200):
+    def __init__(self, world=CartPoleWorld(max_episode_steps=300), episodes=600):
 
         Game.__init__(self, agents=DQNAgent(world=world), world=world, episodes=episodes)
 
@@ -107,3 +109,18 @@ def run_cart_pole_game_dqn():
     history = game.run()
     print(len(history.keys()))
     pickle.dump(history, open('history.pkl', 'wb'))
+
+
+class LunarLanderGame(Game):
+
+    def __init__(self, world=LunarLanderWorld(max_episode_steps=1000), episodes=1000):
+
+        Game.__init__(self, agents=DQNAgent(world=world), world=world, episodes=episodes)
+
+
+def run_lunar_lander_game(save_data=False, data_file_path=''):
+    game = LunarLanderGame()
+    game.run()
+
+    if save_data:
+        pickle.dump(game.agents.qtable, open(data_file_path, 'wb'))
