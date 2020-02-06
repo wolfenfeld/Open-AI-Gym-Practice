@@ -1,5 +1,5 @@
-from Worlds import DiscreteCartPoleWorld, CartPoleWorld, LunarLanderWorld
-from Agents import QLearnerAgent, DQNAgent
+from Components.Worlds import DiscreteCartPoleWorld, CartPoleWorld, LunarLanderWorld
+from Components.Agents import QLearnerAgent, DQNAgent
 
 import pickle
 

@@ -1,4 +1,4 @@
-from DecisionModules import QTableModule, DQNModule
+from Components.DecisionModules import QTableModule, DQNModule
 
 import numpy as np
 import random
@@ -30,13 +30,25 @@ class Agent(object):
         # The decision module of the agent.
         self.decision_module = None
 
+    def is_random_action(self):
+
+        raise NotImplementedError
+
     def sample_action(self, state):
         """
-        Sampling an action
-        :param state: the current state
-        :return: the chosen action.
+        Sampling an action.
+        :param state:
+        :return:
         """
-        pass
+
+        if self.is_random_action():
+            # Sampling a random action.
+            action = self.decision_module.get_random_action()
+        else:
+            # Sampling an action according to the DQN algorithm.
+            action = self.decision_module.get_action(state)
+
+        return action
 
     def update_agent(self, state, action, reward, episode, done):
         """
@@ -89,27 +101,15 @@ class QLearnerAgent(Agent):
             alpha=alpha,
             gamma=gamma)
 
-    def sample_action(self, state):
-        """
-        Sampling an action from the agent
-        :param state: the current state
-        :return: the chosen action
-        """
+    def is_random_action(self):
 
         # Choosing a random action with probability of random_action_rate.
-        choose_random_action = (1 - self.random_action_rate) <= np.random.uniform(0, 1)
-
-        if choose_random_action:
-            # choosing a random action.
-            chosen_action = self.decision_module.get_random_action()
-        else:
-            # Choosing an action according to the decision module.
-            chosen_action = self.decision_module.get_action(state)
+        result = (1 - self.random_action_rate) <= np.random.uniform(0, 1)
 
         # Reducing the probability of choosing a random action.
         self.random_action_rate *= self.random_action_decay_rate
 
-        return chosen_action
+        return result
 
 
 class DQNAgent(Agent):
@@ -133,23 +133,8 @@ class DQNAgent(Agent):
                                          batch_size=16,
                                          memory_size=10000)
 
-    def sample_action(self, state):
-        """
-        Sampling an action using the DQN algorithm and epsilon greedy method.
-        :param state:
-        :return:
-        """
-
+    def is_random_action(self):
         # The random action probability
         self.epsilon /= self.number_of_episodes_played
 
-        choose_random_action = (1-self.epsilon) <= np.random.uniform(0, 1)
-
-        if choose_random_action:
-            # Sampling a random action.
-            action = self.decision_module.get_random_action()
-        else:
-            # Sampling an action according to the DQN algorithm.
-            action = self.decision_module.get_action(state)
-
-        return action
+        return (1 - self.epsilon) <= np.random.uniform(0, 1)
