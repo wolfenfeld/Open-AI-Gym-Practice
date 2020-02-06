@@ -1,4 +1,4 @@
-from Components.DecisionModules import QTableModule, DQNModule
+from Modules.DecisionModules import QTableModule, DQNModule
 
 import numpy as np
 import random
