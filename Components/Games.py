@@ -79,7 +79,12 @@ class Game(object):
         score_interval = 50
         print('Average reward of last {0} runs'.format(score_interval))
         print(sum(rewards.values()[-score_interval:]) / len(rewards.values()[-score_interval:]))
+
         return rewards
+
+    @property
+    def agent_model(self):
+        return self.agents.decision_module
 
 
 class CartPoleGame(Game):
@@ -89,14 +94,6 @@ class CartPoleGame(Game):
         Game.__init__(self, agents=QLearnerAgent(world=world), world=world, episodes=episodes)
 
 
-def run_cart_pole_game(save_data=False, data_file_path=''):
-    game = CartPoleGame()
-    game.run()
-
-    if save_data:
-        pickle.dump(game.agents.qtable, open(data_file_path, 'wb'))
-
-
 class DQNCartPoleGame(CartPoleGame):
 
     def __init__(self, world=CartPoleWorld(max_episode_steps=300), episodes=600):
@@ -104,23 +101,8 @@ class DQNCartPoleGame(CartPoleGame):
         Game.__init__(self, agents=DQNAgent(world=world), world=world, episodes=episodes)
 
 
-def run_cart_pole_game_dqn():
-    game = DQNCartPoleGame()
-    history = game.run()
-    print(len(history.keys()))
-    pickle.dump(history, open('history.pkl', 'wb'))
-
-
 class LunarLanderGame(Game):
 
     def __init__(self, world=LunarLanderWorld(max_episode_steps=1000), episodes=1000):
 
         Game.__init__(self, agents=DQNAgent(world=world), world=world, episodes=episodes)
-
-
-def run_lunar_lander_game(save_data=False, data_file_path=''):
-    game = LunarLanderGame()
-    game.run()
-
-    if save_data:
-        pickle.dump(game.agents.qtable, open(data_file_path, 'wb'))

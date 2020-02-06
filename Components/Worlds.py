@@ -1,6 +1,6 @@
 import numpy as np
-
 import gym
+
 
 class World(object):
     """
@@ -28,7 +28,7 @@ class World(object):
 
     def reset(self):
         """
-        Reseting the world object.
+        Resetting the world object.
         :return: returning the initial state
         """
         return self.env.reset()
@@ -46,13 +46,6 @@ class World(object):
         Render the current environment.
         """
         self.env.render()
-
-    def interact_with_world(self, action):
-        """
-        performing an action on the environment.
-        :param action: the action that is performed on the environment.
-        """
-        pass
 
 
 class DiscreteWorld(World):
@@ -74,6 +67,13 @@ class DiscreteWorld(World):
         World.__init__(self, env_name=env_name, max_episode_steps=max_episode_steps, **kwargs)
 
         self.number_of_discrete_values_per_feature = number_of_discrete_values_per_feature
+
+    def interact_with_world(self, action):
+        """
+        performing an action on the environment.
+        :param action: the action that is performed on the environment.
+        """
+        raise NotImplementedError
 
 
 class DiscreteCartPoleWorld(DiscreteWorld):
@@ -107,7 +107,7 @@ class DiscreteCartPoleWorld(DiscreteWorld):
 
     def reset(self):
         """
-        Reseting the world.
+        Resetting the world.
         :return: the initial state (digitized)
         """
 
@@ -226,4 +226,3 @@ class LunarLanderWorld(World):
         state, reward, done, _ = self.step(action)
 
         return state, reward, done
-

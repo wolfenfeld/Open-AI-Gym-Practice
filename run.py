@@ -1,7 +1,10 @@
-from Components.Games import run_cart_pole_game, run_cart_pole_game_dqn, run_lunar_lander_game
+from Components.Games import DQNCartPoleGame, LunarLanderGame
 
 if __name__ == "__main__":
     # run_cart_pole_game_dqn()
 
-    run_cart_pole_game()
-    # run_lunar_lander_game()
+    dqn_cart_pole_game = DQNCartPoleGame()
+    dqn_cart_pole_game.run()
+
+    lunar_lander_game = LunarLanderGame()
+    lunar_lander_game.run()
