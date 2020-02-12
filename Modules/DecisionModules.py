@@ -22,14 +22,14 @@ class DecisionModule(object):
         :param state: a state.
         :return: the chosen action according to the modules policy.
         """
-        pass
+        raise NotImplementedError
 
     def get_random_action(self):
         """
         Returning a random action.
         :return: a random action.
         """
-        pass
+        raise NotImplementedError
 
 
 class QTableModule(DecisionModule):
@@ -221,36 +221,39 @@ class DQNModule(DecisionModule):
 
     def train(self):
         """
-        Training the neural network with the minibatch.
+        Training the neural network with the sample.
         """
 
         # Sampling from the experience replay.
-        minibatch = random.sample(self.experience_replay, self.batch_size)
+        sample = np.stack(random.sample(self.experience_replay, self.batch_size)).T
 
-        state = [data[0] for data in minibatch]
-        action = [data[1] for data in minibatch]
-        reward = [data[2] for data in minibatch]
-        new_state = [data[3] for data in minibatch]
-        done = [data[4] for data in minibatch]
+        state = np.stack(sample[0])
+        action = sample[1].astype(int)
+        reward = sample[2].astype(int)
+        new_state = np.stack(sample[3])
+        done = sample[4]
 
         # Estimating the Q-values with the forward passing over network with the new state.
-        q = self.forward(Variable(torch.from_numpy(np.array(new_state)).float())).data.numpy()
 
+        # new_state_tensor = torch.from_numpy(new_state).float()
+        #
+        # q = self.forward(Variable(new_state_tensor)).data.numpy()
+        q = self.forward(Variable(torch.from_numpy(new_state).float())).data.numpy()
         # Computing y with the rewards and q.
-        y = list()
+        y = reward + (1-done) * self.gamma * np.max(q, axis=1)
 
-        for i in range(self.batch_size):
-            if done[i]:
-                y.append(reward[i])
-            else:
-                y.append(reward[i] + self.gamma * np.max(q[i]))
+        dtype = torch.FloatTensor
+
+        y_tensor = torch.from_numpy(y.astype(float)).type(dtype)
 
         # Converting y to a torch variable,
-        target = Variable(torch.from_numpy(np.array(y)).float())
+        # target = Variable(y_tensor)
+        target = Variable(y_tensor)
 
-        # Computing the approximation of the target from the minibatch.
-        s = torch.from_numpy(np.array(state)).float()
-        a = torch.from_numpy(np.array(action))
+        # Computing the approximation of the target from the sample.
+        s = torch.from_numpy(state).float()
+        a = torch.from_numpy(action)
+
         approximation = self.forward(Variable(s)).gather(1, Variable(a.unsqueeze(1)))
 
         # Backward pass.
@@ -284,8 +287,10 @@ class DQNModule(DecisionModule):
         :param state: the relevant state.
         :return: the action according to the DQN algorithm.
         """
+        return np.argmax(self.forward(torch.from_numpy(state).float()).data.numpy())
 
-        return np.argmax(self.forward(Variable(torch.from_numpy(np.expand_dims(state, axis=0)).float())).data.numpy())
+
+        # return np.argmax(self.forward(Variable(torch.from_numpy(np.expand_dims(state, axis=0)).float())).data.numpy())
 
     def get_random_action(self):
         """
