@@ -225,13 +225,13 @@ class DQNModule(DecisionModule):
         """
 
         # Sampling from the experience replay.
-        sample = random.sample(self.experience_replay, self.batch_size)
+        sample = np.stack(random.sample(self.experience_replay, self.batch_size)).T
 
-        state = np.array([data[0] for data in sample])
-        action = np.array([data[1] for data in sample])
-        reward = np.array([data[2] for data in sample])
-        new_state = np.array([data[3] for data in sample])
-        done = np.array([data[4] for data in sample])
+        state = np.stack(sample[0])
+        action = sample[1].astype(int)
+        reward = sample[2].astype(int)
+        new_state = np.stack(sample[3])
+        done = sample[4]
 
         # Estimating the Q-values with the forward passing over network with the new state.
         q = self.forward(Variable(torch.from_numpy(new_state).float())).data.numpy()
