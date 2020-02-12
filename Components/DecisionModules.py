@@ -233,25 +233,22 @@ class DQNModule(DecisionModule):
         new_state = np.stack(sample[3])
         done = sample[4]
 
+        state_tensor = torch.from_numpy(state).float()
+        action_tensor = torch.from_numpy(action)
+        new_state_tensor = torch.from_numpy(new_state).float()
+
+
         # Estimating the Q-values with the forward passing over network with the new state.
-        q = self.forward(Variable(torch.from_numpy(new_state).float())).data.numpy()
+        q = self.forward(Variable(new_state_tensor)).data.numpy()
 
         # Computing y with the rewards and q.
-        y = list()
-
-        for i in range(self.batch_size):
-            if done[i]:
-                y.append(reward[i])
-            else:
-                y.append(reward[i] + self.gamma * np.max(q[i]))
-
+        y = reward + (1-done) * self.gamma * np.max(q, axis=1)
+        y_tensor = torch.from_numpy(y).float()
         # Converting y to a torch variable,
-        target = Variable(torch.from_numpy(np.array(y)).float())
+        target = Variable(y_tensor)
 
         # Computing the approximation of the target from the sample.
-        s = torch.from_numpy(state).float()
-        a = torch.from_numpy(np.array(action))
-        approximation = self.forward(Variable(s)).gather(1, Variable(a.unsqueeze(1)))
+        approximation = self.forward(Variable(state_tensor)).gather(1, Variable(action_tensor.unsqueeze(1)))
 
         # Backward pass.
         self.optimizer.zero_grad()
