@@ -1,4 +1,4 @@
-class BaseDecisionModule(object):
+class BaseDecisionModel(object):
     """
     A decision model of and agents provides an action according to its policy.
     """

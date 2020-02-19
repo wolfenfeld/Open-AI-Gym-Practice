@@ -2,10 +2,10 @@ import random
 import itertools
 import numpy as np
 
-from Modules.DecisionModules.BaseDecisionModule import BaseDecisionModule
+from Modules.DecisionModels.BaseDecisionModel import BaseDecisionModel
 
 
-class QTableModule(BaseDecisionModule):
+class QTableModel(BaseDecisionModel):
     """
     Q-table module - using a Q-learning policy to return an action.
     """
@@ -29,7 +29,7 @@ class QTableModule(BaseDecisionModule):
         # Initializing the q table.
         self.q_table = self.initiate_q_table()
 
-        BaseDecisionModule.__init__(self)
+        BaseDecisionModel.__init__(self)
 
     def initiate_q_table(self):
         """
@@ -67,7 +67,7 @@ class QTableModule(BaseDecisionModule):
         return (1 - self.alpha) * self.q_table[previous_state][previous_action] + \
             self.alpha * (reward + self.gamma * self.q_table[state][action])
 
-    def update_module(self, previous_state, previous_action, reward, state, action, done):
+    def update_model(self, previous_state, previous_action, reward, state, action, done):
         """
         Updating the module.
         :param state: the current state

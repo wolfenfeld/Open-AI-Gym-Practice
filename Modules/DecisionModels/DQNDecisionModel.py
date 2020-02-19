@@ -1,4 +1,3 @@
-import itertools
 import numpy as np
 import random
 
@@ -8,10 +7,10 @@ import torch
 from torch import nn
 from torch.autograd import Variable
 
-from Modules.DecisionModules.BaseDecisionModule import BaseDecisionModule
+from Modules.DecisionModels.BaseDecisionModel import BaseDecisionModel
 
 
-class DQNModule(BaseDecisionModule):
+class DQNModel(BaseDecisionModel):
     """
         Q-table module - using the DQN algorithm to return an action.
         """
@@ -29,24 +28,24 @@ class DQNModule(BaseDecisionModule):
         :param batch_size: the batch size for training the network.
         :param memory_size: the memory size (where all the feedback and actions are stored)
         """
-        BaseDecisionModule.__init__(self)
+        BaseDecisionModel.__init__(self)
 
         # The neural network module.
-        self.module = nn.Module()
+        self.neural_network = nn.Module()
 
         # Initializing the neural network module.
-        self.module.__init__()
+        self.neural_network.__init__()
 
         # The neural networks layers and activation function.
-        self.module.f1 = nn.Linear(number_of_features, 40)
-        self.module.f2 = nn.Linear(40, 100)
-        self.module.f3 = nn.Linear(100, number_of_actions)
-        self.module.relu = nn.ReLU()
+        self.neural_network.f1 = nn.Linear(number_of_features, 40)
+        self.neural_network.f2 = nn.Linear(40, 100)
+        self.neural_network.f3 = nn.Linear(100, number_of_actions)
+        self.neural_network.relu = nn.ReLU()
 
         # The metric used to optimize.
-        self.module.mse = nn.MSELoss()
+        self.neural_network.mse = nn.MSELoss()
         # The optimizer.
-        self.optimizer = torch.optim.Adam(self.module.parameters(), lr=1e-3)
+        self.optimizer = torch.optim.Adam(self.neural_network.parameters(), lr=1e-3)
 
         # The memory where all the experience is stored (and used to train the network).
         self.experience_replay = deque()
@@ -68,11 +67,11 @@ class DQNModule(BaseDecisionModule):
         :param state: the state
         :return: the estimate of Q for the state.
         """
-        out = self.module.f1(state)
-        out = self.module.relu(out)
-        out = self.module.f2(out)
-        out = self.module.relu(out)
-        out = self.module.f3(out)
+        out = self.neural_network.f1(state)
+        out = self.neural_network.relu(out)
+        out = self.neural_network.f2(out)
+        out = self.neural_network.relu(out)
+        out = self.neural_network.f3(out)
 
         return out
 
@@ -138,7 +137,7 @@ class DQNModule(BaseDecisionModule):
         self.optimizer.zero_grad()
 
         # Defining the loss - MSE(approximation, target).
-        loss = self.module.mse(approximation, target)
+        loss = self.neural_network.mse(approximation, target)
         loss.backward()
         self.optimizer.step()
 

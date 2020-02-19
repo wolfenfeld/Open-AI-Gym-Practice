@@ -2,11 +2,11 @@
 import numpy as np
 import random
 
-from Modules.DecisionModules.DQNDecisionModules import DQNModule
-from Modules.DecisionModules.QTableDecisionModule import QTableModule
+from Modules.DecisionModels.DQNDecisionModel import DQNModel
+from Modules.DecisionModels.QTableDecisionModel import QTableModel
 
 
-class Agent(object):
+class BaseAgent(object):
     """
     The agent object that will play the game.
     """
@@ -30,7 +30,7 @@ class Agent(object):
         self.number_of_episodes_played = 1
 
         # The decision module of the agent.
-        self.decision_module = None
+        self.decision_model = None
 
     def is_random_action(self):
 
@@ -45,10 +45,10 @@ class Agent(object):
 
         if self.is_random_action():
             # Sampling a random action.
-            action = self.decision_module.get_random_action()
+            action = self.decision_model.get_random_action()
         else:
             # Sampling an action according to the DQN algorithm.
-            action = self.decision_module.get_action(state)
+            action = self.decision_model.get_action(state)
 
         return action
 
@@ -65,13 +65,13 @@ class Agent(object):
         self.number_of_episodes_played = episode
 
         # Updating the decision module.
-        self.decision_module.update_module(self.world.last_observation, self.last_action, reward, state, action, done)
+        self.decision_model.update_model(self.world.last_observation, self.last_action, reward, state, action, done)
 
         # Updating the last action.
         self.last_action = action
 
 
-class QLearnerAgent(Agent):
+class QLearnerAgent(BaseAgent):
     """
     Q-Learner agent - uses the q-learning algorithm to play.
     """
@@ -93,10 +93,10 @@ class QLearnerAgent(Agent):
         self.random_action_rate = random_action_rate
         self.random_action_decay_rate = random_action_decay_rate
 
-        Agent.__init__(self, world=world, initial_action=initial_action)
+        BaseAgent.__init__(self, world=world, initial_action=initial_action)
 
         # Setting the decision module as a q-table.
-        self.decision_module = QTableModule(
+        self.decision_model = QTableModel(
             number_of_discrete_values_per_feature=world.number_of_discrete_values_per_feature,
             number_of_features=world.number_of_features,
             number_of_actions=world.number_of_actions,
@@ -114,7 +114,7 @@ class QLearnerAgent(Agent):
         return result
 
 
-class DQNAgent(Agent):
+class DQNAgent(BaseAgent):
     """
     Agent object using the DQN algorithm.
     """
@@ -123,17 +123,17 @@ class DQNAgent(Agent):
         Initializing the agent.
         :param world: the world that the agent will play in.
         """
-        Agent.__init__(self, world)
+        BaseAgent.__init__(self, world)
 
         # The value used for the epsilon-greedy method.
         self.epsilon = 1.0
 
         # The DQN decision module.
-        self.decision_module = DQNModule(number_of_features=world.number_of_features,
-                                         number_of_actions=world.number_of_actions,
-                                         gamma=0.9,
-                                         batch_size=16,
-                                         memory_size=10000)
+        self.decision_model = DQNModel(number_of_features=world.number_of_features,
+                                       number_of_actions=world.number_of_actions,
+                                       gamma=0.9,
+                                       batch_size=16,
+                                       memory_size=10000)
 
     def is_random_action(self):
         # The random action probability

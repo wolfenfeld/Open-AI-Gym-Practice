@@ -1,7 +1,6 @@
-from Modules.Worlds import DiscreteCartPoleWorld, CartPoleWorld, LunarLanderWorld
 from Modules.Agents import QLearnerAgent, DQNAgent
-
-import pickle
+from Modules.Worlds.ContinuousWorlds import CartPoleContinuousWorld, LunarLanderContinuousWorld
+from Modules.Worlds.DescreteWorlds import DiscreteCartPoleWorld
 
 
 class Game(object):
@@ -96,13 +95,13 @@ class CartPoleGame(Game):
 
 class DQNCartPoleGame(CartPoleGame):
 
-    def __init__(self, world=CartPoleWorld(max_episode_steps=300), episodes=600):
+    def __init__(self, world=CartPoleContinuousWorld(max_episode_steps=300), episodes=600):
 
         Game.__init__(self, agents=DQNAgent(world=world), world=world, episodes=episodes)
 
 
 class LunarLanderGame(Game):
 
-    def __init__(self, world=LunarLanderWorld(max_episode_steps=1000), episodes=1000):
+    def __init__(self, world=LunarLanderContinuousWorld(max_episode_steps=1000), episodes=1000):
 
         Game.__init__(self, agents=DQNAgent(world=world), world=world, episodes=episodes)
