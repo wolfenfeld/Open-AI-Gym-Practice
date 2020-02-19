@@ -78,4 +78,4 @@ class BaseGame(object):
 
     @property
     def agent_model(self):
-        return self.agents.decision_module
+        return self.agents.decision_model

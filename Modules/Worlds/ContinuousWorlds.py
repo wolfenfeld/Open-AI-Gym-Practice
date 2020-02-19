@@ -1,7 +1,7 @@
 from Modules.Worlds.BaseWorlds import BaseWorld
 
 
-class CartPoleContinuousWorld(BaseWorld):
+class ContinuousCartPoleWorld(BaseWorld):
     """
     A continues (not digitized) cart-pole world.
     """
@@ -45,7 +45,7 @@ class CartPoleContinuousWorld(BaseWorld):
         return state, reward, done
 
 
-class LunarLanderContinuousWorld(BaseWorld):
+class ContinuousLunarLanderWorld(BaseWorld):
     """
     A continues (not digitized) lunar-lander world.
     """

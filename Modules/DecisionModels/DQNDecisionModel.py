@@ -141,7 +141,7 @@ class DQNModel(BaseDecisionModel):
         loss.backward()
         self.optimizer.step()
 
-    def update_module(self, previous_state, previous_action, reward, state, _, done):
+    def update_model(self, previous_state, previous_action, reward, state, _, done):
         """
         Updating the module.
         :param state: the current state.
