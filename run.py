@@ -1,4 +1,4 @@
-from Modules.Games import DQNCartPoleGame, LunarLanderGame, CartPoleGame
+from Modules.Games.CartPoleGames import DQNCartPoleGame, LunarLanderGame, CartPoleGame
 
 if __name__ == "__main__":
     # run_cart_pole_game_dqn()
