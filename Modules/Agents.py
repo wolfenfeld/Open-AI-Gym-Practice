@@ -1,7 +1,9 @@
-from Modules.DecisionModules import QTableModule, DQNModule
 
 import numpy as np
 import random
+
+from Modules.DecisionModules.DQNDecisionModules import DQNModule
+from Modules.DecisionModules.QTableDecisionModule import QTableModule
 
 
 class Agent(object):
