@@ -30,6 +30,88 @@ class DQNModel(BaseDecisionModel):
         """
         BaseDecisionModel.__init__(self)
 
+        self.dqn = DQN(number_of_features, number_of_actions)
+
+        # The optimizer.
+        self.optimizer = torch.optim.Adam(self.dqn.parameters, lr=1e-3)
+
+        # The depth of the experience_replay.
+        self.memory_size = memory_size
+
+        # The memory where all the experience is stored (and used to train the network).
+        self.replay_memory = ReplayMemory(memory_size)
+
+        # The number of possible actions.
+        self.number_of_actions = number_of_actions
+
+        # The batch size for the training
+        self.batch_size = batch_size
+
+        # The discount factor.
+        self.gamma = gamma
+
+    def update_model(self, previous_state, previous_action, reward, state, _, done):
+        """
+        Updating the experience_replay memory and training the network.
+        :param state: current state
+        :param reward: current reward
+        :param previous_state: previous state
+        :param previous_action: previous action
+        :param done: done status
+        """
+
+        if done:
+            reward = -200
+
+        # Updating experience_replay.
+        self.replay_memory.push(previous_state, previous_action, reward, state, done)
+
+        # Training if we have enough examples.
+        if len(self.replay_memory) > self.batch_size:
+            self.train()
+
+    def train(self):
+        """
+        Training the neural network with the sample.
+        """
+
+        # Sampling from the experience replay.
+        state, action, reward, new_state, done = self.replay_memory.sample(self.batch_size)
+
+        # Computing q values.
+        q_values = reward + (1-done) * self.gamma * self.dqn.get_values(new_state)
+
+        # Computing the approximation of the target from the sample.
+        predicted_q_values = self.dqn.predict_q_values(state, action)
+
+        # Backward pass.
+        self.optimizer.zero_grad()
+
+        # Defining the loss - MSE(approximation, target).
+        loss = self.dqn.compute_loss(predicted_q_values, q_values)
+        loss.backward()
+        self.optimizer.step()
+
+    def get_action(self, state):
+        """
+        Get the action according to the DQN algorithm.
+        :param state: the relevant state.
+        :return: the action according to the DQN algorithm.
+        """
+        return self.dqn.get_action_with_max_value(state)
+
+    def get_random_action(self):
+        """
+        Get a random action.
+        :return: a random action
+        """
+
+        return random.randint(0, self.number_of_actions - 1)
+
+
+class DQN(object):
+
+    def __init__(self, number_of_features, number_of_actions):
         # The neural network module.
         self.neural_network = nn.Module()
 
@@ -44,22 +126,6 @@ class DQNModel(BaseDecisionModel):
 
         # The metric used to optimize.
         self.neural_network.mse = nn.MSELoss()
-        # The optimizer.
-        self.optimizer = torch.optim.Adam(self.neural_network.parameters(), lr=1e-3)
-
-        # The memory where all the experience is stored (and used to train the network).
-        self.experience_replay = deque()
-        # The depth of the experience_replay.
-        self.memory_size = memory_size
-
-        # The number of possible actions.
-        self.number_of_actions = number_of_actions
-
-        # The batch size for the training
-        self.batch_size = batch_size
-
-        # The discount factor.
-        self.gamma = gamma
 
     def forward(self, state):
         """
@@ -75,101 +141,55 @@ class DQNModel(BaseDecisionModel):
 
         return out
 
-    def compute(self, previous_state, previous_action, reward, state, done):
-        """
-        Updating the experience_replay memory and training the network.
-        :param state: current state
-        :param reward: current reward
-        :param previous_state: previous state
-        :param previous_action: previous action
-        :param done: done status
-        """
-        # Updating experience_replay.
-        self.experience_replay.append(
-            (previous_state, previous_action, reward, state, done))
+    def get_values(self, state):
 
-        # Popping experience out if out of memory.
-        if len(self.experience_replay) > self.memory_size:
-            self.experience_replay.popleft()
+        return np.max(self.forward(Variable(torch.from_numpy(state).float())).data.numpy())
 
-        # Training if we have enough examples.
-        if len(self.experience_replay) > self.batch_size:
-            self.train()
+    def predict_q_values(self, state, action):
 
-    def train(self):
-        """
-        Training the neural network with the sample.
-        """
-
-        # Sampling from the experience replay.
-        sample = np.stack(random.sample(self.experience_replay, self.batch_size)).T
-
-        state = np.stack(sample[0])
-        action = sample[1].astype(int)
-        reward = sample[2].astype(int)
-        new_state = np.stack(sample[3])
-        done = sample[4]
-
-        # Estimating the Q-values with the forward passing over network with the new state.
-
-        # new_state_tensor = torch.from_numpy(new_state).float()
-        #
-        # q = self.forward(Variable(new_state_tensor)).data.numpy()
-        q = self.forward(Variable(torch.from_numpy(new_state).float())).data.numpy()
-        # Computing y with the rewards and q.
-        y = reward + (1-done) * self.gamma * np.max(q, axis=1)
-
-        dtype = torch.FloatTensor
-
-        y_tensor = torch.from_numpy(y.astype(float)).type(dtype)
-
-        # Converting y to a torch variable,
-        # target = Variable(y_tensor)
-        target = Variable(y_tensor)
-
-        # Computing the approximation of the target from the sample.
         s = torch.from_numpy(state).float()
         a = torch.from_numpy(action)
 
-        approximation = self.forward(Variable(s)).gather(1, Variable(a.unsqueeze(1)))
+        return self.forward(Variable(s)).gather(1, Variable(a.unsqueeze(1)))
 
-        # Backward pass.
-        self.optimizer.zero_grad()
+    def get_action_with_max_value(self, state):
 
-        # Defining the loss - MSE(approximation, target).
-        loss = self.neural_network.mse(approximation, target)
-        loss.backward()
-        self.optimizer.step()
+        np.argmax(self.forward(torch.from_numpy(state).float()).data.numpy())
 
-    def update_model(self, previous_state, previous_action, reward, state, _, done):
-        """
-        Updating the module.
-        :param state: the current state.
-        :param _: placeholder from the current action.
-        :param reward: the current reward.
-        :param previous_state: the previous state.
-        :param previous_action: the previous action.
-        :param done: the done indicator.
-        """
-        # If done inflict a -200 fine.
-        if done:
-            reward = -200
+    @property
+    def parameters(self):
+        return self.neural_network.parameters()
 
-        # Update the network.
-        self.compute(previous_state, previous_action, reward, state, done)
+    def compute_loss(self, approximation, target):
+        return self.neural_network.mse(approximation, target)
 
-    def get_action(self, state):
-        """
-        Get the action according to the DQN algorithm.
-        :param state: the relevant state.
-        :return: the action according to the DQN algorithm.
-        """
-        return np.argmax(self.forward(torch.from_numpy(state).float()).data.numpy())
 
-    def get_random_action(self):
-        """
-        Get a random action.
-        :return: a random action
-        """
+class ReplayMemory(object):
 
-        return random.randint(0, self.number_of_actions - 1)
+    def __init__(self, memory_size):
+        self.memory_size = memory_size
+        self.memory = list()
+        self.position = 0
+
+    def push(self, previous_state, previous_action, reward, state, done):
+        """Saves a transition."""
+        if len(self.memory) < self.memory_size:
+            self.memory.append(None)
+
+        self.memory[self.position] = (previous_state, previous_action, reward, state, done)
+        self.position = (self.position + 1) % self.memory_size
+
+    def sample(self, batch_size):
+
+        random_sample = np.stack(random.sample(self.memory, batch_size)).T
+
+        state = np.stack(random_sample[0])
+        action = random_sample[1].astype(int)
+        reward = random_sample[2].astype(int)
+        new_state = np.stack(random_sample[3])
+        done = random_sample[4]
+
+        return state, action, reward, new_state, done
+
+    def __len__(self):
+        return len(self.memory)

@@ -31,7 +31,7 @@ class QTableModel(BaseDecisionModel):
 
         BaseDecisionModel.__init__(self)
 
-    def q_value(self, previous_state, previous_action, reward, state, action):
+    def _q_value(self, previous_state, previous_action, reward, state, action):
         """
         Calculating the Q-value.
         :param state: the current state
@@ -43,7 +43,7 @@ class QTableModel(BaseDecisionModel):
         """
 
         return (1 - self.alpha) * self.q_table.get_value(previous_state, previous_action) + \
-               self.alpha * (reward + self.gamma * self.q_table.get_value(state, action))
+            self.alpha * (reward + self.gamma * self.q_table.get_value(state, action))
 
     def update_model(self, previous_state, previous_action, reward, state, action, done):
         """
@@ -61,7 +61,7 @@ class QTableModel(BaseDecisionModel):
 
         # Updating the Q-table.
         self.q_table.set_value(previous_state, previous_action,
-                               self.q_value(previous_state, previous_action, reward, state, action))
+                               self._q_value(previous_state, previous_action, reward, state, action))
 
     def get_action(self, state):
         """

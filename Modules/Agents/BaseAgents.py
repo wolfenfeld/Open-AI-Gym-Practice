@@ -31,7 +31,7 @@ class BaseAgent(object):
 
         raise NotImplementedError
 
-    def sample_action(self, state):
+    def get_action(self, state):
         """
         Sampling an action.
         :param state:
@@ -47,7 +47,7 @@ class BaseAgent(object):
 
         return action
 
-    def update_agent(self, state, action, reward, episode, done):
+    def reinforce(self, state, action, reward, episode, done):
         """
         Updating the agent
         :param state: the state

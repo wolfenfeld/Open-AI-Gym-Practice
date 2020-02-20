@@ -7,4 +7,4 @@ class LunarLanderGame(BaseGame):
 
     def __init__(self, world=ContinuousLunarLanderWorld(max_episode_steps=1000), episodes=1000):
 
-        BaseGame.__init__(self, agents=DQNAgent(world=world), world=world, episodes=episodes)
+        BaseGame.__init__(self, agent=DQNAgent(world=world), world=world, episodes=episodes)

@@ -2,14 +2,14 @@ class BaseGame(object):
     """
     Game - The object that defines the game.
     """
-    def __init__(self, agents, world, episodes):
+    def __init__(self, agent, world, episodes):
         """
         Initialization of the Game object
-        :param agents: the agents that play the game
+        :param agent: the agents that play the game
         :param world: the world where the game is played
         :param episodes: the number of episodes that will be played in the game.
         """
-        self.agents = agents
+        self.agent = agent
         self.world = world
         self.episodes = episodes
 
@@ -32,7 +32,7 @@ class BaseGame(object):
             state = self.world.reset()
 
             # The initial action
-            action = self.agents.sample_action(state)
+            action = self.agent.get_action(state)
 
             while True:
                 # if episode > self.episodes - 300:
@@ -43,13 +43,13 @@ class BaseGame(object):
                 state, reward, done = self.world.interact_with_world(action)
 
                 # Sampling the action from the agent.
-                action = self.agents.sample_action(state)
+                action = self.agent.get_action(state)
 
                 # Updating the total reward.
                 total_reward += reward
 
                 # Updating the agent
-                self.agents.update_agent(state, action, reward, episode, done)
+                self.agent.reinforce(state, action, reward, episode, done)
 
                 # Updating the world object.
                 self.world.last_observation = state
@@ -78,4 +78,4 @@ class BaseGame(object):
 
     @property
     def agent_model(self):
-        return self.agents.decision_model
+        return self.agent.decision_model
