@@ -27,31 +27,9 @@ class QTableModel(BaseDecisionModel):
         self.gamma = gamma
 
         # Initializing the q table.
-        self.q_table = self.initiate_q_table()
+        self.q_table = QTable(number_of_discrete_values_per_feature, number_of_features, number_of_actions)
 
         BaseDecisionModel.__init__(self)
-
-    def initiate_q_table(self):
-        """
-        Initializing the Q-table with random values.
-        :return: the Q-table - a number_of_discrete_values_per_feature * number_of_discrete_values_per_feature by
-        number_of_actions table.
-        """
-        q_table = dict()
-
-        iterable_argument = \
-            [range(self.number_of_discrete_values_per_feature + 1) for _ in range(self.number_of_features)]
-
-        # The index of the table
-        q_table_keys = list(itertools.product(*iterable_argument))
-
-        # The initial random values
-        q_table_initial_values = np.random.uniform(low=-1, high=1, size=(len(q_table_keys),
-                                                                         self.number_of_actions))
-        # Setting the values.
-        q_table.update(zip(q_table_keys, q_table_initial_values))
-
-        return q_table
 
     def q_value(self, previous_state, previous_action, reward, state, action):
         """
@@ -64,8 +42,8 @@ class QTableModel(BaseDecisionModel):
         :return: The Q-value
         """
 
-        return (1 - self.alpha) * self.q_table[previous_state][previous_action] + \
-            self.alpha * (reward + self.gamma * self.q_table[state][action])
+        return (1 - self.alpha) * self.q_table.get_value(previous_state, previous_action) + \
+               self.alpha * (reward + self.gamma * self.q_table.get_value(state, action))
 
     def update_model(self, previous_state, previous_action, reward, state, action, done):
         """
@@ -82,8 +60,8 @@ class QTableModel(BaseDecisionModel):
             reward = -200
 
         # Updating the Q-table.
-        self.q_table[previous_state][previous_action] = \
-            self.q_value(previous_state, previous_action, reward, state, action)
+        self.q_table.set_value(previous_state, previous_action,
+                               self.q_value(previous_state, previous_action, reward, state, action))
 
     def get_action(self, state):
         """
@@ -91,7 +69,7 @@ class QTableModel(BaseDecisionModel):
         :param state: the state.
         :return: the action with the highest Q-value for a state.
         """
-        return np.argmax(self.q_table[state])
+        return self.q_table.get_action_with_max_value(state)
 
     def get_random_action(self):
         """
@@ -99,3 +77,33 @@ class QTableModel(BaseDecisionModel):
         :return:a random action.
         """
         return random.randint(0, self.number_of_actions - 1)
+
+
+class QTable(object):
+
+    def __init__(self, number_of_discrete_values_per_feature, number_of_features, number_of_actions):
+        self.table = dict()
+
+        iterable_argument = \
+            [range(number_of_discrete_values_per_feature + 1) for _ in range(number_of_features)]
+
+        # The index of the table
+        q_table_keys = list(itertools.product(*iterable_argument))
+
+        # The initial random values
+        q_table_initial_values = np.random.uniform(low=-1, high=1, size=(len(q_table_keys),
+                                                                         number_of_actions))
+        # Setting the values.
+        self.table.update(zip(q_table_keys, q_table_initial_values))
+
+    def get_value(self, state, action):
+
+        return self.table[state][action]
+
+    def set_value(self, state, action, value):
+
+        self.table[state][action] = value
+
+    def get_action_with_max_value(self, state):
+
+        return np.argmax(self.table[state])
