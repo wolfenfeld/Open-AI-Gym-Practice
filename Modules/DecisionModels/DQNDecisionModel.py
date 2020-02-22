@@ -18,7 +18,7 @@ class DQNModel(BaseDecisionModel):
                  number_of_features,
                  number_of_actions,
                  gamma=0.9,
-                 batch_size=16,
+                 batch_size=100,
                  memory_size=10000):
         """
         Initializing the DQN module
@@ -61,7 +61,7 @@ class DQNModel(BaseDecisionModel):
         """
 
         if done:
-            reward = -200
+            reward = -10
 
         # Updating experience_replay.
         self.replay_memory.push(previous_state, previous_action, reward, state, done)
@@ -79,15 +79,15 @@ class DQNModel(BaseDecisionModel):
         state, action, reward, new_state, done = self.replay_memory.sample(self.batch_size)
 
         # Computing q values.
-        q_values = reward + (1-done) * self.gamma * self.dqn.get_values(new_state)
+        q_values = self.dqn.compute_q_values(new_state, reward, done, self.gamma)
 
-        # Computing the approximation of the target from the sample.
+        # Computing the q value approximation.
         predicted_q_values = self.dqn.predict_q_values(state, action)
 
-        # Backward pass.
+        # reset gradient.
         self.optimizer.zero_grad()
 
-        # Defining the loss - MSE(approximation, target).
+        # Compute the loss.
         loss = self.dqn.compute_loss(predicted_q_values, q_values)
         loss.backward()
         self.optimizer.step()
@@ -141,26 +141,30 @@ class DQN(object):
 
         return out
 
-    def get_values(self, state):
+    def compute_q_values(self, new_state, reward, done, gamma):
 
-        return np.max(self.forward(Variable(torch.from_numpy(state).float())).data.numpy())
+        values_from_new_state = self._get_values_for_state(torch.from_numpy(new_state).float())
+
+        return torch.from_numpy(reward) + torch.from_numpy(gamma*(1-done).astype(float)) * values_from_new_state
+
+    def _get_values_for_state(self, state):
+
+        return torch.max(self.forward(state), dim=1)[0]
 
     def predict_q_values(self, state, action):
 
-        s = torch.from_numpy(state).float()
-        a = torch.from_numpy(action)
-
-        return self.forward(Variable(s)).gather(1, Variable(a.unsqueeze(1)))
+        return self.forward(torch.from_numpy(state).float()).gather(1, torch.from_numpy(action).unsqueeze(1))
 
     def get_action_with_max_value(self, state):
 
-        np.argmax(self.forward(torch.from_numpy(state).float()).data.numpy())
+        return np.argmax(self.forward(torch.from_numpy(state).float()).data.numpy())
 
     @property
     def parameters(self):
         return self.neural_network.parameters()
 
     def compute_loss(self, approximation, target):
+
         return self.neural_network.mse(approximation, target)
 
 
@@ -172,7 +176,7 @@ class ReplayMemory(object):
         self.position = 0
 
     def push(self, previous_state, previous_action, reward, state, done):
-        """Saves a transition."""
+
         if len(self.memory) < self.memory_size:
             self.memory.append(None)
 

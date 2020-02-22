@@ -36,7 +36,7 @@ class BaseGame(object):
 
             while True:
                 # if episode > self.episodes - 300:
-                self.world.render()
+                # self.world.render()
 
                 # Interacting with the world and acquiring the feedback:
                 # the new state, the reward and the done indicator.
