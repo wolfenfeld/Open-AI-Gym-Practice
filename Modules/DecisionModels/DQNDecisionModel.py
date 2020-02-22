@@ -1,13 +1,13 @@
 import numpy as np
 import random
-
-from collections import deque
+from collections import namedtuple
 
 import torch
 from torch import nn
-from torch.autograd import Variable
 
 from Modules.DecisionModels.BaseDecisionModel import BaseDecisionModel
+
+Transition = namedtuple('Transition', ['state', 'action', 'reward', 'new_state', 'done'])
 
 
 class DQNModel(BaseDecisionModel):
@@ -119,9 +119,9 @@ class DQN(object):
         self.neural_network.__init__()
 
         # The neural networks layers and activation function.
-        self.neural_network.f1 = nn.Linear(number_of_features, 40)
-        self.neural_network.f2 = nn.Linear(40, 100)
-        self.neural_network.f3 = nn.Linear(100, number_of_actions)
+        self.neural_network.f1 = nn.Linear(number_of_features, 128)
+        self.neural_network.f2 = nn.Linear(128, 128)
+        self.neural_network.f3 = nn.Linear(128, number_of_actions)
         self.neural_network.relu = nn.ReLU()
 
         # The metric used to optimize.
@@ -143,9 +143,9 @@ class DQN(object):
 
     def compute_q_values(self, new_state, reward, done, gamma):
 
-        values_from_new_state = self._get_values_for_state(torch.from_numpy(new_state).float())
+        values_from_new_state = self._get_values_for_state(new_state)
 
-        return torch.from_numpy(reward) + torch.from_numpy(gamma*(1-done).astype(float)) * values_from_new_state
+        return reward + gamma*(1-done) * values_from_new_state
 
     def _get_values_for_state(self, state):
 
@@ -153,7 +153,7 @@ class DQN(object):
 
     def predict_q_values(self, state, action):
 
-        return self.forward(torch.from_numpy(state).float()).gather(1, torch.from_numpy(action).unsqueeze(1))
+        return self.forward(state).gather(1, action.unsqueeze(1))
 
     def get_action_with_max_value(self, state):
 
@@ -193,7 +193,13 @@ class ReplayMemory(object):
         new_state = np.stack(random_sample[3])
         done = random_sample[4]
 
-        return state, action, reward, new_state, done
+        state_tensor = torch.from_numpy(state).float()
+        action_tensor = torch.from_numpy(action)
+        new_state_tensor = torch.from_numpy(new_state).float()
+        reward_tensor = torch.from_numpy(reward)
+        done_tensor = torch.from_numpy(done.astype(int))
+
+        return state_tensor, action_tensor, reward_tensor, new_state_tensor, done_tensor
 
     def __len__(self):
         return len(self.memory)

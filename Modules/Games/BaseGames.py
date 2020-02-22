@@ -72,7 +72,7 @@ class BaseGame(object):
         print(rewards.values())
         score_interval = 50
         print('Average reward of last {0} runs'.format(score_interval))
-        print(sum(rewards.values()[-score_interval:]) / len(rewards.values()[-score_interval:]))
+        print(sum(list(rewards.values())[-score_interval:]) / len(list(rewards.values())[-score_interval:]))
 
         return rewards
 
