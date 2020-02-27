@@ -36,7 +36,7 @@ class BaseGame(object):
 
             while True:
                 # if episode > self.episodes - 300:
-                # self.world.render()
+                self.world.render()
 
                 # Interacting with the world and acquiring the feedback:
                 # the new state, the reward and the done indicator.
@@ -49,7 +49,7 @@ class BaseGame(object):
                 total_reward += reward
 
                 # Updating the agent
-                self.agent.reinforce(state, action, reward, episode, done)
+                self.agent.reinforce(state, action, total_reward, episode, done)
 
                 # Updating the world object.
                 self.world.last_observation = state

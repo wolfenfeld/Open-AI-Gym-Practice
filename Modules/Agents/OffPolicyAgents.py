@@ -2,7 +2,34 @@ import numpy as np
 
 from Modules.Agents.BaseAgents import BaseAgent
 from Modules.DecisionModels.DQNDecisionModel import DQNModel
+from Modules.DecisionModels.HillClimbDecisionModel import HillClimbModel
 from Modules.DecisionModels.QTableDecisionModel import QTableModel
+
+
+class HillClimbAgent(BaseAgent):
+
+    def __init__(self,
+                 world,
+                 initial_action=None,
+                 noise_scale=1e-1):
+        """
+        :param world: the world
+        :param initial_action: the initial action
+         """
+        self.noise_scale = noise_scale
+
+        BaseAgent.__init__(self, world=world, initial_action=initial_action)
+
+        # Setting the decision module as a q-table.
+        self.decision_model = HillClimbModel(
+            number_of_discrete_values_per_feature=world.number_of_discrete_values_per_feature,
+            number_of_features=world.number_of_features,
+            number_of_actions=world.number_of_actions,
+            alpha=noise_scale)
+
+    def is_random_action(self):
+
+        return False
 
 
 class QLearnerAgent(BaseAgent):

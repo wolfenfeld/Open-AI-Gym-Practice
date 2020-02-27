@@ -4,6 +4,7 @@ from collections import namedtuple
 
 import torch
 from torch import nn
+from torch.autograd import Variable
 
 from Modules.DecisionModels.BaseDecisionModel import BaseDecisionModel
 
@@ -18,7 +19,7 @@ class DQNModel(BaseDecisionModel):
                  number_of_features,
                  number_of_actions,
                  gamma=0.9,
-                 batch_size=100,
+                 batch_size=200,
                  memory_size=10000):
         """
         Initializing the DQN module
@@ -61,7 +62,7 @@ class DQNModel(BaseDecisionModel):
         """
 
         if done:
-            reward = -10
+            reward = -5
 
         # Updating experience_replay.
         self.replay_memory.push(previous_state, previous_action, reward, state, done)
@@ -157,7 +158,9 @@ class DQN(object):
 
     def get_action_with_max_value(self, state):
 
-        return np.argmax(self.forward(torch.from_numpy(state).float()).data.numpy())
+        state_tensor = torch.from_numpy(state).float()
+
+        return np.argmax(self.forward(state_tensor).data.numpy())
 
     @property
     def parameters(self):
@@ -191,13 +194,13 @@ class ReplayMemory(object):
         action = random_sample[1].astype(int)
         reward = random_sample[2].astype(int)
         new_state = np.stack(random_sample[3])
-        done = random_sample[4]
+        done = random_sample[4].astype(int)
 
-        state_tensor = torch.from_numpy(state).float()
-        action_tensor = torch.from_numpy(action)
-        new_state_tensor = torch.from_numpy(new_state).float()
-        reward_tensor = torch.from_numpy(reward)
-        done_tensor = torch.from_numpy(done.astype(int))
+        state_tensor = Variable(torch.from_numpy(state).float(), requires_grad=True)
+        action_tensor = Variable(torch.from_numpy(action))
+        new_state_tensor = Variable(torch.from_numpy(new_state).float(), requires_grad=True)
+        reward_tensor = Variable(torch.from_numpy(reward).float())
+        done_tensor = Variable(torch.from_numpy(done).float())
 
         return state_tensor, action_tensor, reward_tensor, new_state_tensor, done_tensor
 
