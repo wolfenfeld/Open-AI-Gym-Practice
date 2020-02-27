@@ -9,16 +9,14 @@ class HillClimbModel(BaseDecisionModel):
     """
     Q-table module - using a Q-learning policy to return an action.
     """
-    def __init__(self, number_of_discrete_values_per_feature, number_of_features, number_of_actions, alpha=1e-2):
+    def __init__(self, number_of_features, number_of_actions, alpha=1e-2):
         """
         Initializing the Q-learning module that holds a state-action pair table with all the estimated Q-values.
         There are number_of_discrete_values_per_feature*number_of_features states and number_of_actions actions..
-        :param number_of_discrete_values_per_feature: used to index table.
         :param number_of_features: used to index table
         :param number_of_actions: used to index table
         """
 
-        self.number_of_discrete_values_per_feature = number_of_discrete_values_per_feature
         self.number_of_features = number_of_features
         self.number_of_actions = number_of_actions
 

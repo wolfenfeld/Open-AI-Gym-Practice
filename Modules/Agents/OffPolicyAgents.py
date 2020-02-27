@@ -21,11 +21,9 @@ class HillClimbAgent(BaseAgent):
         BaseAgent.__init__(self, world=world, initial_action=initial_action)
 
         # Setting the decision module as a q-table.
-        self.decision_model = HillClimbModel(
-            number_of_discrete_values_per_feature=world.number_of_discrete_values_per_feature,
-            number_of_features=world.number_of_features,
-            number_of_actions=world.number_of_actions,
-            alpha=noise_scale)
+        self.decision_model = HillClimbModel(number_of_features=world.number_of_features,
+                                             number_of_actions=world.number_of_actions,
+                                             alpha=noise_scale)
 
     def is_random_action(self):
 
