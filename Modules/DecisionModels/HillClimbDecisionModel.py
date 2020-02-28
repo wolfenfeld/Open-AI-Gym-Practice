@@ -2,7 +2,7 @@ import random
 import itertools
 import numpy as np
 
-from Modules.DecisionModels.BaseDecisionModel import BaseDecisionModel
+from Modules.DecisionModels.BaseDecisionModel import BaseDecisionModel, Transition
 
 
 class HillClimbModel(BaseDecisionModel):
@@ -27,7 +27,7 @@ class HillClimbModel(BaseDecisionModel):
 
         BaseDecisionModel.__init__(self)
 
-    def update_model(self, previous_state, previous_action, reward, state, action, done):
+    def update_model(self, transition: Transition):
         """
         Updating the module.
         :param state: the current state
@@ -37,8 +37,8 @@ class HillClimbModel(BaseDecisionModel):
         :param previous_action: the previous action.
         :param done: episode is done indicator.
         """
-        if reward >= self.best_reward:
-            self.best_reward = reward
+        if transition.reward >= self.best_reward:
+            self.best_reward = transition.reward
             self.best_weights = np.copy(self.weights)
             self.alpha = max(self.alpha / 1.5, 1e-2)
         else:

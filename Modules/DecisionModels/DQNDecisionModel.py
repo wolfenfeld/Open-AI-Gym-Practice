@@ -1,14 +1,11 @@
 import numpy as np
 import random
-from collections import namedtuple
 
 import torch
 from torch import nn
 from torch.autograd import Variable
 
 from Modules.DecisionModels.BaseDecisionModel import BaseDecisionModel
-
-Transition = namedtuple('Transition', ['state', 'action', 'reward', 'new_state', 'done'])
 
 
 class DQNModel(BaseDecisionModel):
@@ -31,10 +28,10 @@ class DQNModel(BaseDecisionModel):
         """
         BaseDecisionModel.__init__(self)
 
-        self.dqn = DQN(number_of_features, number_of_actions)
+        self.q_network = QNetwork(number_of_features, number_of_actions)
 
         # The optimizer.
-        self.optimizer = torch.optim.Adam(self.dqn.parameters, lr=1e-3)
+        self.optimizer = torch.optim.Adam(self.q_network.parameters, lr=1e-3)
 
         # The depth of the experience_replay.
         self.memory_size = memory_size
@@ -80,16 +77,16 @@ class DQNModel(BaseDecisionModel):
         state, action, reward, new_state, done = self.replay_memory.sample(self.batch_size)
 
         # Computing q values.
-        q_values = self.dqn.compute_q_values(new_state, reward, done, self.gamma)
+        q_values = self.q_network.compute_q_values(new_state, reward, done, self.gamma)
 
         # Computing the q value approximation.
-        predicted_q_values = self.dqn.predict_q_values(state, action)
+        predicted_q_values = self.q_network.predict_q_values(state, action)
 
         # reset gradient.
         self.optimizer.zero_grad()
 
         # Compute the loss.
-        loss = self.dqn.compute_loss(predicted_q_values, q_values)
+        loss = self.q_network.compute_loss(predicted_q_values, q_values)
         loss.backward()
         self.optimizer.step()
 
@@ -99,7 +96,7 @@ class DQNModel(BaseDecisionModel):
         :param state: the relevant state.
         :return: the action according to the DQN algorithm.
         """
-        return self.dqn.get_action_with_max_value(state)
+        return self.q_network.get_action_with_max_value(state)
 
     def get_random_action(self):
         """
@@ -110,7 +107,7 @@ class DQNModel(BaseDecisionModel):
         return random.randint(0, self.number_of_actions - 1)
 
 
-class DQN(object):
+class QNetwork(object):
 
     def __init__(self, number_of_features, number_of_actions):
         # The neural network module.

@@ -1,3 +1,8 @@
+from collections import namedtuple
+
+Transition = namedtuple('Transition', ['state', 'action', 'reward', 'next_state', 'done'])
+
+
 class BaseDecisionModel(object):
     """
     A decision model of and agents provides an action according to its policy.
@@ -18,4 +23,7 @@ class BaseDecisionModel(object):
         Returning a random action.
         :return: a random action.
         """
+
+    def update_model(self, transition):
+
         raise NotImplementedError

@@ -2,7 +2,7 @@ import random
 import itertools
 import numpy as np
 
-from Modules.DecisionModels.BaseDecisionModel import BaseDecisionModel
+from Modules.DecisionModels.BaseDecisionModel import BaseDecisionModel, Transition
 
 
 class QTableModel(BaseDecisionModel):
@@ -31,7 +31,7 @@ class QTableModel(BaseDecisionModel):
 
         BaseDecisionModel.__init__(self)
 
-    def _q_value(self, previous_state, previous_action, reward, state, action):
+    def _q_value(self, transition):
         """
         Calculating the Q-value.
         :param state: the current state
@@ -42,10 +42,12 @@ class QTableModel(BaseDecisionModel):
         :return: The Q-value
         """
 
-        return (1 - self.alpha) * self.q_table.get_value(previous_state, previous_action) + \
-            self.alpha * (reward + self.gamma * self.q_table.get_value(state, action))
+        reward = transition.reward if not transition.done else -200
 
-    def update_model(self, previous_state, previous_action, reward, state, action, done):
+        return (1 - self.alpha) * self.q_table.get_value(transition.state, transition.action) + \
+            self.alpha * (reward + self.gamma * self.q_table.get_max_value(transition.next_state))
+
+    def update_model(self, transition: Transition):
         """
         Updating the module.
         :param state: the current state
@@ -56,12 +58,11 @@ class QTableModel(BaseDecisionModel):
         :param done: episode is done indicator.
         """
         # The if the episode is done a -200 fine is inflicted.
-        if done:
-            reward = -200
+        # if transition.done:
+        #     transition.reward = -200
 
         # Updating the Q-table.
-        self.q_table.set_value(previous_state, previous_action,
-                               self._q_value(previous_state, previous_action, reward, state, action))
+        self.q_table.set_value(transition.state, transition.action, self._q_value(transition))
 
     def get_action(self, state):
         """
@@ -107,3 +108,7 @@ class QTable(object):
     def get_action_with_max_value(self, state):
 
         return np.argmax(self.table[state])
+
+    def get_max_value(self, state):
+
+        return np.max(self.table[state])

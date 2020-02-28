@@ -37,10 +37,10 @@ class QLearnerAgent(BaseAgent):
     def __init__(self,
                  world,
                  initial_action=None,
-                 alpha=0.2,
-                 gamma=1,
-                 random_action_rate=0.5,
-                 random_action_decay_rate=0.9):
+                 alpha=0.5,
+                 gamma=0.95,
+                 random_action_rate=1,
+                 random_action_decay_rate=0.95):
         """
         :param world: the world
         :param initial_action: the initial action

@@ -47,7 +47,7 @@ class BaseAgent(object):
 
         return action
 
-    def reinforce(self, state, action, reward, episode, done):
+    def reinforce(self, episode, transition):
         """
         Updating the agent
         :param state: the state
@@ -60,7 +60,7 @@ class BaseAgent(object):
         self.number_of_episodes_played = episode
 
         # Updating the decision module.
-        self.decision_model.update_model(self.world.last_observation, self.last_action, reward, state, action, done)
+        self.decision_model.update_model(transition)
 
-        # Updating the last action.
-        self.last_action = action
+        # # Updating the last action.
+        # self.last_action = action

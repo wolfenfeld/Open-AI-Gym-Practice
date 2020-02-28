@@ -1,3 +1,6 @@
+from Modules.DecisionModels.BaseDecisionModel import Transition
+
+
 class BaseGame(object):
     """
     Game - The object that defines the game.
@@ -31,28 +34,25 @@ class BaseGame(object):
             # The initial state
             state = self.world.reset()
 
-            # The initial action
-            action = self.agent.get_action(state)
-
             while True:
                 # if episode > self.episodes - 300:
-                self.world.render()
-
-                # Interacting with the world and acquiring the feedback:
-                # the new state, the reward and the done indicator.
-                state, reward, done = self.world.interact_with_world(action)
+                # self.world.render()
 
                 # Sampling the action from the agent.
                 action = self.agent.get_action(state)
 
+                # Interacting with the world and acquiring the feedback:
+                # the new state, the reward and the done indicator.
+                next_state, reward, done = self.world.interact_with_world(action)
+
+                transition = Transition(state=state, action=action, reward=reward, next_state=next_state, done=done)
                 # Updating the total reward.
                 total_reward += reward
 
                 # Updating the agent
-                self.agent.reinforce(state, action, total_reward, episode, done)
+                self.agent.reinforce(episode, transition)
 
-                # Updating the world object.
-                self.world.last_observation = state
+                state = next_state
 
                 # If the episode is done.
                 if done:

@@ -3,10 +3,10 @@ from Modules.Games.LunarLanderGames import LunarLanderGame
 
 if __name__ == "__main__":
     # run_cart_pole_game_dqn()
-
-    cart_pole_game = HillClimbCartPoleGame()
-    cart_pole_game.run()
-
+    #
+    # cart_pole_game = HillClimbCartPoleGame()
+    # cart_pole_game.run()
+    #
     cart_pole_game = CartPoleGame()
     cart_pole_game.run()
 
