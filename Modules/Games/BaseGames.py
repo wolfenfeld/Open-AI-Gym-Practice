@@ -49,8 +49,9 @@ class BaseGame(object):
                 # Updating the total reward.
                 total_reward += reward
 
+                self.agent.number_of_episodes_played += 1
                 # Updating the agent
-                self.agent.reinforce(episode, transition)
+                self.agent.reinforce(transition)
 
                 state = next_state
 

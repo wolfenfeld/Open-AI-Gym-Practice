@@ -90,9 +90,9 @@ class DQNAgent(BaseAgent):
         # The DQN decision module.
         self.decision_model = DQNModel(number_of_features=world.number_of_features,
                                        number_of_actions=world.number_of_actions,
-                                       gamma=0.9,
-                                       batch_size=16,
-                                       memory_size=10000)
+                                       gamma=0.99,
+                                       batch_size=128,
+                                       memory_size=5000)
 
     def is_random_action(self):
         # The random action probability

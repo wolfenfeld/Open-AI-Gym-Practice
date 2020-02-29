@@ -30,12 +30,7 @@ class HillClimbModel(BaseDecisionModel):
     def update_model(self, transition: Transition):
         """
         Updating the module.
-        :param state: the current state
-        :param action: the current action
-        :param reward: the current reward
-        :param previous_state: the previous state
-        :param previous_action: the previous action.
-        :param done: episode is done indicator.
+        :param transition: state, action, reward, new_state, done
         """
         if transition.reward >= self.best_reward:
             self.best_reward = transition.reward

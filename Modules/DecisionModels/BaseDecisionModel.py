@@ -13,7 +13,7 @@ class BaseDecisionModel(object):
     def get_action(self, state):
         """
         Getting an action according to the modules policy.
-        :param state: a state.
+        :param state: the agents state.
         :return: the chosen action according to the modules policy.
         """
         raise NotImplementedError
@@ -23,7 +23,8 @@ class BaseDecisionModel(object):
         Returning a random action.
         :return: a random action.
         """
+        raise NotImplementedError
 
-    def update_model(self, transition):
+    def update_model(self, transition: Transition):
 
         raise NotImplementedError

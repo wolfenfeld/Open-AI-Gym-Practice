@@ -34,11 +34,7 @@ class QTableModel(BaseDecisionModel):
     def _q_value(self, transition):
         """
         Calculating the Q-value.
-        :param state: the current state
-        :param action: the current action
-        :param reward: the current reward
-        :param previous_state: the previous state
-        :param previous_action: the previous action.
+        :param transition:
         :return: The Q-value
         """
 
@@ -50,16 +46,8 @@ class QTableModel(BaseDecisionModel):
     def update_model(self, transition: Transition):
         """
         Updating the module.
-        :param state: the current state
-        :param action: the current action
-        :param reward: the current reward
-        :param previous_state: the previous state
-        :param previous_action: the previous action.
-        :param done: episode is done indicator.
+        :param transition: state, action, reward, new_state, done
         """
-        # The if the episode is done a -200 fine is inflicted.
-        # if transition.done:
-        #     transition.reward = -200
 
         # Updating the Q-table.
         self.q_table.set_value(transition.state, transition.action, self._q_value(transition))

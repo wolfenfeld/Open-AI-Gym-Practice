@@ -3,9 +3,8 @@ import random
 
 import torch
 from torch import nn
-from torch.autograd import Variable
 
-from Modules.DecisionModels.BaseDecisionModel import BaseDecisionModel
+from Modules.DecisionModels.BaseDecisionModel import BaseDecisionModel, Transition
 
 
 class DQNModel(BaseDecisionModel):
@@ -15,9 +14,9 @@ class DQNModel(BaseDecisionModel):
     def __init__(self,
                  number_of_features,
                  number_of_actions,
-                 gamma=0.9,
-                 batch_size=200,
-                 memory_size=10000):
+                 gamma,
+                 batch_size,
+                 memory_size):
         """
         Initializing the DQN module
         :param number_of_features: number of features.
@@ -48,21 +47,15 @@ class DQNModel(BaseDecisionModel):
         # The discount factor.
         self.gamma = gamma
 
-    def update_model(self, previous_state, previous_action, reward, state, _, done):
+    def update_model(self, transition: Transition):
         """
         Updating the experience_replay memory and training the network.
-        :param state: current state
-        :param reward: current reward
-        :param previous_state: previous state
-        :param previous_action: previous action
-        :param done: done status
+        :param transition: transaction data - state, action, reward, next_state, done
+        :
         """
 
-        if done:
-            reward = -5
-
         # Updating experience_replay.
-        self.replay_memory.push(previous_state, previous_action, reward, state, done)
+        self.replay_memory.push(transition)
 
         # Training if we have enough examples.
         if len(self.replay_memory) > self.batch_size:
@@ -117,9 +110,9 @@ class QNetwork(object):
         self.neural_network.__init__()
 
         # The neural networks layers and activation function.
-        self.neural_network.f1 = nn.Linear(number_of_features, 128)
-        self.neural_network.f2 = nn.Linear(128, 128)
-        self.neural_network.f3 = nn.Linear(128, number_of_actions)
+        self.neural_network.f1 = nn.Linear(number_of_features, 32)
+        self.neural_network.f2 = nn.Linear(32, 64)
+        self.neural_network.f3 = nn.Linear(64, number_of_actions)
         self.neural_network.relu = nn.ReLU()
 
         # The metric used to optimize.
@@ -142,6 +135,8 @@ class QNetwork(object):
     def compute_q_values(self, new_state, reward, done, gamma):
 
         values_from_new_state = self._get_values_for_state(new_state)
+
+        reward = reward*(1-done) - 100*done*torch.ones_like(reward)
 
         return reward + gamma*(1-done) * values_from_new_state
 
@@ -175,31 +170,31 @@ class ReplayMemory(object):
         self.memory = list()
         self.position = 0
 
-    def push(self, previous_state, previous_action, reward, state, done):
+    def push(self, transition: Transition):
 
         if len(self.memory) < self.memory_size:
             self.memory.append(None)
 
-        self.memory[self.position] = (previous_state, previous_action, reward, state, done)
+        self.memory[self.position] = transition
         self.position = (self.position + 1) % self.memory_size
 
     def sample(self, batch_size):
 
-        random_sample = np.stack(random.sample(self.memory, batch_size)).T
+        random_sample = Transition(*zip(*random.sample(self.memory, batch_size)))
 
-        state = np.stack(random_sample[0])
-        action = random_sample[1].astype(int)
-        reward = random_sample[2].astype(int)
-        new_state = np.stack(random_sample[3])
-        done = random_sample[4].astype(int)
+        state = np.stack(random_sample.state)
+        action = np.array(random_sample.action).astype(int)
+        reward = np.array(random_sample.reward).astype(int)
+        next_state = np.stack(random_sample.next_state)
+        done = np.array(random_sample.done).astype(int)
 
-        state_tensor = Variable(torch.from_numpy(state).float(), requires_grad=True)
-        action_tensor = Variable(torch.from_numpy(action))
-        new_state_tensor = Variable(torch.from_numpy(new_state).float(), requires_grad=True)
-        reward_tensor = Variable(torch.from_numpy(reward).float())
-        done_tensor = Variable(torch.from_numpy(done).float())
+        state_tensor = torch.from_numpy(state).float()
+        action_tensor = torch.from_numpy(action)
+        next_state_tensor = torch.from_numpy(next_state).float()
+        reward_tensor = torch.from_numpy(reward).float()
+        done_tensor = torch.from_numpy(done).float()
 
-        return state_tensor, action_tensor, reward_tensor, new_state_tensor, done_tensor
+        return state_tensor, action_tensor, reward_tensor, next_state_tensor, done_tensor
 
     def __len__(self):
         return len(self.memory)

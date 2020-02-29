@@ -1,5 +1,7 @@
 import random
 
+from Modules.DecisionModels.BaseDecisionModel import Transition
+
 
 class BaseAgent(object):
     """
@@ -34,7 +36,7 @@ class BaseAgent(object):
     def get_action(self, state):
         """
         Sampling an action.
-        :param state:
+        :param state: agent state
         :return:
         """
 
@@ -47,17 +49,11 @@ class BaseAgent(object):
 
         return action
 
-    def reinforce(self, episode, transition):
+    def reinforce(self, transition: Transition):
         """
         Updating the agent
-        :param state: the state
-        :param action: the action
-        :param reward: the reward
-        :param episode: the episode played
-        :param done: the status of the game
+        :param transition: state, action, reward, new_state, done
         """
-        # The number of episodes played.
-        self.number_of_episodes_played = episode
 
         # Updating the decision module.
         self.decision_model.update_model(transition)

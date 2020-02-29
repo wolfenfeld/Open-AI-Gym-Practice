@@ -2,6 +2,7 @@ from Modules.Agents.OffPolicyAgents import QLearnerAgent, DQNAgent, HillClimbAge
 from Modules.Games.BaseGames import BaseGame
 from Modules.Worlds.ContinuousWorlds import ContinuousCartPoleWorld
 from Modules.Worlds.DescreteWorlds import DiscreteCartPoleWorld
+from Modules.DecisionModels.BaseDecisionModel import Transition
 
 
 class CartPoleGame(BaseGame):
@@ -58,8 +59,9 @@ class HillClimbCartPoleGame(BaseGame):
                     # Updating the reward dictionary.
                     rewards[episode] = total_reward
 
+                    transition = Transition(None, None, total_reward, None, None)
                     # Updating the agent
-                    self.agent.reinforce(state, action, total_reward, episode, done)
+                    self.agent.reinforce(episode, transition)
 
                     # Keeping best reward.
                     self.best_total_reward = max(total_reward, self.best_total_reward)
