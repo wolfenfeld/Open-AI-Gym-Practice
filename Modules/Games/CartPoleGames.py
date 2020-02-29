@@ -14,7 +14,7 @@ class CartPoleGame(BaseGame):
 
 class HillClimbCartPoleGame(BaseGame):
 
-    def __init__(self, world=DiscreteCartPoleWorld(max_episode_steps=400), episodes=600):
+    def __init__(self, world=DiscreteCartPoleWorld(max_episode_steps=200), episodes=1000):
 
         BaseGame.__init__(self, agent=HillClimbAgent(world=world), world=world, episodes=episodes)
 
@@ -37,8 +37,8 @@ class HillClimbCartPoleGame(BaseGame):
             action = self.agent.get_action(state)
 
             while True:
-                # if episode > self.episodes - 300:
-                self.world.render()
+
+                # self.world.render()
 
                 # Interacting with the world and acquiring the feedback:
                 # the new state, the reward and the done indicator.
@@ -50,9 +50,6 @@ class HillClimbCartPoleGame(BaseGame):
                 # Updating the total reward.
                 total_reward += reward
 
-                # Updating the world object.
-                self.world.last_observation = state
-
                 # If the episode is done.
                 if done:
 
@@ -61,7 +58,7 @@ class HillClimbCartPoleGame(BaseGame):
 
                     transition = Transition(None, None, total_reward, None, None)
                     # Updating the agent
-                    self.agent.reinforce(episode, transition)
+                    self.agent.reinforce(transition)
 
                     # Keeping best reward.
                     self.best_total_reward = max(total_reward, self.best_total_reward)

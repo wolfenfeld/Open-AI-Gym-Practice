@@ -110,9 +110,9 @@ class QNetwork(object):
         self.neural_network.__init__()
 
         # The neural networks layers and activation function.
-        self.neural_network.f1 = nn.Linear(number_of_features, 32)
-        self.neural_network.f2 = nn.Linear(32, 64)
-        self.neural_network.f3 = nn.Linear(64, number_of_actions)
+        self.neural_network.f1 = nn.Linear(number_of_features, 64)
+        self.neural_network.f2 = nn.Linear(64, 128)
+        self.neural_network.f3 = nn.Linear(128, number_of_actions)
         self.neural_network.relu = nn.ReLU()
 
         # The metric used to optimize.
@@ -136,7 +136,7 @@ class QNetwork(object):
 
         values_from_new_state = self._get_values_for_state(new_state)
 
-        reward = reward*(1-done) - 100*done*torch.ones_like(reward)
+        reward = reward*(1-done) - 200*done*torch.ones_like(reward)
 
         return reward + gamma*(1-done) * values_from_new_state
 
