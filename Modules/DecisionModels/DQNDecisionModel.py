@@ -136,7 +136,7 @@ class QNetwork(object):
 
         values_from_new_state = self._get_values_for_state(new_state)
 
-        reward = reward*(1-done) - 200*done*torch.ones_like(reward)
+        reward = reward*(1-done) - 150*done*torch.ones_like(reward)
 
         return reward + gamma*(1-done) * values_from_new_state
 
